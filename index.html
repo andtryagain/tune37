@@ -48,7 +48,7 @@
 
     function colorToFrequency(color) {
       const [r,g,b] = color.match(/\d+/g).map(Number);
-      return 200 + (r+g+b) % 600; // 200–1000 Гц
+      return 200 + (r+g+b) % 200; // 200–1000 Гц
     }
 
     let audioCtx = null;
@@ -71,9 +71,9 @@
 
           osc.frequency.value = colorToFrequency(p.color);
           osc.start(audioCtx.currentTime);
-          osc.stop(audioCtx.currentTime + 0.1);
+          osc.stop(audioCtx.currentTime + 0.2);
 
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, 400));
         }
       }
     }
