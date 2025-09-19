@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>tune 37</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      margin: 0;
+    }
+    canvas {
+      border: 1px solid black;
+      image-rendering: pixelated;
+    }
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="256" height="256"></canvas>
+  <button id="play">play pixels</button>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const playBtn = document.getElementById("play");
+
+    const scale = 8; // размер пикселя
+    let pixels = [];
+
+    function generatePixels() {
+      pixels = [];
+      for (let y = 0; y < 32; y++) {
+        for (let x = 0; x < 32; x++) {
+          const color = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+          ctx.fillStyle = color;
+          ctx.fillRect(x * scale, y * scale, scale, scale);
+          pixels.push({x, y, color});
+        }
+      }
+    }
+
+    function colorToFrequency(color) {
+      const [r,g,b] = color.match(/\d+/g).map(Number);
+      return 200 + (r+g+b) % 600; // 200–1000 Гц
+    }
+
+    let audioCtx = null;
+    let isPlaying = false;
+
+    async function playPixelsLoop() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      while (isPlaying) {
+        generatePixels(); // генерируем новое панно перед каждым прогоном
+
+        for (const p of pixels) {
+          if (!isPlaying) break;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          gain.gain.value = 0.2; // громкость
+
+          osc.frequency.value = colorToFrequency(p.color);
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + 0.1);
+
+          await new Promise(r => setTimeout(r, 200));
+        }
+      }
+    }
+
+    playBtn.onclick = async () => {
+      if (!isPlaying) {
+        isPlaying = true;
+        playBtn.textContent = "stop";
+        await playPixelsLoop();
+        isPlaying = false;
+        playBtn.textContent = "play pixels";
+      } else {
+        isPlaying = false;
+        if (audioCtx) {
+          audioCtx.close();
+        }
+        playBtn.textContent = "play pixels";
+      }
+    };
+  </script>
+</body>
+</html>
