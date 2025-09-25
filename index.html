@@ -78,21 +78,33 @@
       }
     }
 
-    playBtn.onclick = async () => {
-      if (!isPlaying) {
-        isPlaying = true;
-        playBtn.textContent = "stop";
-        await playPixelsLoop();
-        isPlaying = false;
-        playBtn.textContent = "play pixels";
-      } else {
-        isPlaying = false;
-        if (audioCtx) {
-          audioCtx.close();
-        }
-        playBtn.textContent = "play pixels";
+  playBtn.onclick = async () => {
+    if (!isPlaying) {
+      isPlaying = true;
+      playBtn.textContent = "Stop";
+
+      // создаём AudioContext только при клике
+      if (!audioCtx || audioCtx.state === "closed") {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
-    };
+
+      // обязательно "resume" на iOS
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+
+      await playPixelsLoop();
+      isPlaying = false;
+      playBtn.textContent = "Play Pixels";
+    } else {
+      isPlaying = false;
+      if (audioCtx) {
+        audioCtx.close();
+      }
+      playBtn.textContent = "Play Pixels";
+    }
+  };
+
   </script>
 </body>
 </html>
